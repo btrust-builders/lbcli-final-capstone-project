@@ -16,7 +16,7 @@ rpcpassword=btrustbuilderspass
 rpcconnect=165.22.121.70
 ```
 
-...and then execute `bitcoin-cli -signet getblockchaininfo` without extra options.
+...and then execute `bitcoin-cli -signet getblockchaininfo`.
 
 Using the command above with return an object containing various state info regarding the blockchain on Signet which you can confirm on `https://mempool.space/signet`.
 
