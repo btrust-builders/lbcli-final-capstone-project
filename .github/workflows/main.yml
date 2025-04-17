@@ -1,0 +1,105 @@
+name: Run Setup Script
+
+on:
+  push:
+    branches:
+      - main  # Trigger on pushes to the main branch
+
+jobs:
+  bitcoin-setup:
+    runs-on: ubuntu-latest  # Use the latest Ubuntu environment
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4  # Check out the repository code
+
+      - name: Cache Bitcoin Core
+        id: cache-bitcoin
+        uses: actions/cache@v3
+        with:
+          path: |
+            bitcoin-28.0
+            bitcoin-28.0-x86_64-linux-gnu.tar.gz
+          key: bitcoin-core-28.0
+          
+      - name: Setup Bitcoin Core
+        run: |
+          if [ "${{ steps.cache-bitcoin.outputs.cache-hit }}" != 'true' ]; then
+            wget https://bitcoincore.org/bin/bitcoin-core-28.0/bitcoin-28.0-x86_64-linux-gnu.tar.gz
+            tar -xzvf bitcoin-28.0-x86_64-linux-gnu.tar.gz
+          fi
+          sudo bash .github/setup.sh
+
+      - name: Start bitcoind in regtest mode
+        run: |
+          bitcoind -regtest -daemon
+          echo "Waiting for bitcoind to be ready..."
+
+          # Wait for bitcoind to start (max 30s)
+          for i in {1..30}; do
+            if bitcoin-cli -regtest getblockchaininfo > /dev/null 2>&1; then
+              echo "✅ bitcoind is ready!"
+              break
+            fi
+            echo "Still waiting for bitcoind..."
+            sleep 1
+          done
+
+      - name: 01.sh - Verify Wallet Creation
+        run: |
+            chmod +x submission/01.sh
+            WALLET=$(submission/01.sh)
+            if [[ "$WALLET" == *"btrustwallet"* ]]; then
+              echo "✅ Success: Wallet creation passed!"
+            else
+              echo "❌ Error: Wallet creation failed!"
+              exit 1
+            fi
+
+      - name: 02.sh - Verify Redeem Script
+        run: |
+          chmod +x submission/02.sh
+          SCRIPT=$(submission/02.sh)
+          REDEEM_SCRIPT=522102da2f10746e9778dd57bd0276a4f84101c4e0a711f9cfd9f09cde55acbdd2d1912102bfde48be4aa8f4bf76c570e98a8d287f9be5638412ab38dede8e78df82f33fa352ae
+          if [[ "$SCRIPT" == "$REDEEM_SCRIPT" ]]; then
+            echo "✅ Success: Redeem Script verification passed!"
+          else
+            echo "❌ Error: Redeem Script verification failed!"
+            exit 1
+          fi
+      
+      - name: 03.sh - Verify P2SH Segwit Script
+        run: |
+          chmod +x submission/03.sh
+          SCRIPT=$(submission/03.sh)
+          EXPECTED=2NByn92W1vH5oQC1daY69F5sU7PEStKKQBR
+          if [[ "$SCRIPT" == "$EXPECTED" ]]; then
+            echo "✅ Success: P2SH Segwit Script verification passed!"
+          else
+            echo "❌ Error: P2SH Segwit Script verification failed!"
+            exit 1
+          fi
+          
+      - name: 04.sh - Verify CLTV Script
+        run: |
+          chmod +x submission/04.sh
+          SCRIPT=$(submission/04.sh)
+          EXPECTED_OUTPUT=0420cd2459b17576a9141e51fcdc14be9a148bb0aaec9197eb47c83776fb88ac
+          if [[ "$SCRIPT" == "$EXPECTED_OUTPUT" ]]; then
+            echo "✅ Success: CLTV Script verification passed!"
+          else
+            echo "❌ Error: CLTV Script verification failed!"
+            exit 1
+          fi
+      
+      - name: 05.sh - Verify CSV Script
+        run: |
+          chmod +x submission/05.sh
+          SCRIPT=$(submission/05.sh)
+          EXPECTED_OUTPUT=029600b27576a9141e51fcdc14be9a148bb0aaec9197eb47c83776fb88ac
+          if [[ "$SCRIPT" == "$EXPECTED_OUTPUT" ]]; then
+            echo "✅ Success: CSV Script verification passed!"
+          else
+            echo "❌ Error: CSV Script verification failed!"
+            exit 1
+          fi

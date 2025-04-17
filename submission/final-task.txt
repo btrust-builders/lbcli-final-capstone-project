@@ -1,0 +1,45 @@
+USE SIGNET NETWORK FOR THIS FINAL TASK 
+See README.md file on how to send bitcoin cli commands to the Signet network
+
+For the final task you will first create a bitcoin wallet using your github username as wallet name
+After successful creation, add your wallet name to the `wallet.txt` file
+
+Hence, you should add your wallet name to subsquent commands, for example 
+`bitcoin-cli -signet -rpcwallet=github-username getblockcount`
+
+You dont need to add your bitcoin-cli commands in this file.
+The goal is to update the `xxx.txt` files with the address, transaction and block hashes.
+
+1. Create a bitcoin wallet using your github username as wallet name
+    - add your wallet name to the `wallet.txt` file
+
+2. Create a native SegWit address
+    - add your address to the `address.txt` file
+
+3. Fund the address from this faucet (alt.signetfaucet.com) and save to files:
+   - transaction-1.txt (txid)
+   - block-1.txt (blockhash for the transaction)
+   - coinbase-1.txt (coinbase transaction in the block)
+
+4. Spend from funded address above:
+   - Create transaction with details below:
+   - Send exactly 10,000 sats to tb1qddpcyus3u603n63lk7m5epjllgexc24vj5ltp7
+   - Fee: 500 sats
+   - Make sure transaction fee can be later updated to a higher fee
+   - Broadcast transaction
+   - Save txid to transaction-2.txt
+   - Save transaction block hash to block-2.txt and coinbase transaction to coinbase-2.txt
+
+5. Create 2-of-3 multisig address:
+   - save to multisig-address.txt
+   - Save redeemScript to multisig-redeem.txt
+   - Fund from faucet, and save txid to multisig-transaction.txt
+   - Save transaction block hash to multisig-block.txt and coinbase transaction to multisig-coinbase.txt
+
+ STUCK HERE BECAUSE I CAN'T IMPORT THE MULTISIG ADDRESS AND SPEND FROM IT 
+6. Spend from multisig:
+   - Send exactly 25,000 sats to [MISSING_ADDRESS]
+   - Fee: 900 sats
+   - Requires 2 signatures
+   - Save txid to transaction-3.txt
+   - Save confirmation details to block-3.txt and coinbase-3.txt
