@@ -30,76 +30,97 @@ jobs:
           fi
           sudo bash .github/setup.sh
 
-      - name: Start bitcoind in regtest mode
+      - name: Get latest block in signet mode
         run: |
-          bitcoind -regtest -daemon
-          echo "Waiting for bitcoind to be ready..."
+            bitcoin-cli -signet getblockchaininfo
 
-          # Wait for bitcoind to start (max 30s)
-          for i in {1..30}; do
-            if bitcoin-cli -regtest getblockchaininfo > /dev/null 2>&1; then
-              echo "✅ bitcoind is ready!"
-              break
-            fi
-            echo "Still waiting for bitcoind..."
-            sleep 1
-          done
-
-      - name: 01.sh - Verify Wallet Creation
+      - name: 01.sh - Verify Hash Block
         run: |
             chmod +x submission/01.sh
-            WALLET=$(submission/01.sh)
-            if [[ "$WALLET" == *"btrustwallet"* ]]; then
-              echo "✅ Success: Wallet creation passed!"
+            HASH=$(submission/01.sh)
+            if [[ "$HASH" == "000000b024f11595795f0be5974229f786df389c8b92e92b61890e9e3c6b8d8a" ]]; then
+              echo "✅ Success: Verify Hash Block passed!"
             else
-              echo "❌ Error: Wallet creation failed!"
+              echo "❌ Error: Verify Hash Block failed!"
               exit 1
             fi
 
-      - name: 02.sh - Verify Redeem Script
+      - name: 02.sh - Verify Input Count
         run: |
           chmod +x submission/02.sh
-          SCRIPT=$(submission/02.sh)
-          REDEEM_SCRIPT=522102da2f10746e9778dd57bd0276a4f84101c4e0a711f9cfd9f09cde55acbdd2d1912102bfde48be4aa8f4bf76c570e98a8d287f9be5638412ab38dede8e78df82f33fa352ae
-          if [[ "$SCRIPT" == "$REDEEM_SCRIPT" ]]; then
-            echo "✅ Success: Redeem Script verification passed!"
+          COUNT=$(submission/02.sh)
+          if [[ "$COUNT" == "442" ]]; then
+            echo "✅ Success: Input Count verification passed!"
           else
-            echo "❌ Error: Redeem Script verification failed!"
+            echo "❌ Error: Input Count verification failed!"
             exit 1
           fi
       
-      - name: 03.sh - Verify P2SH Segwit Script
+      - name: 03.sh - Verify Transaction
         run: |
           chmod +x submission/03.sh
-          SCRIPT=$(submission/03.sh)
-          EXPECTED=2NByn92W1vH5oQC1daY69F5sU7PEStKKQBR
-          if [[ "$SCRIPT" == "$EXPECTED" ]]; then
-            echo "✅ Success: P2SH Segwit Script verification passed!"
+          TX=$(submission/03.sh)
+          EXPECTED=0e302b600d32b86c3362647f422e5605165a1e5c89c760d0d972e102f390c84e
+          if [[ "$TX" == "$EXPECTED" ]]; then
+            echo "✅ Success: Transaction verification passed!"
           else
-            echo "❌ Error: P2SH Segwit Script verification failed!"
+            echo "❌ Error: Transaction verification failed!"
             exit 1
           fi
           
-      - name: 04.sh - Verify CLTV Script
+      - name: 04.sh - Verify Public Key Signer
         run: |
           chmod +x submission/04.sh
-          SCRIPT=$(submission/04.sh)
-          EXPECTED_OUTPUT=0420cd2459b17576a9141e51fcdc14be9a148bb0aaec9197eb47c83776fb88ac
-          if [[ "$SCRIPT" == "$EXPECTED_OUTPUT" ]]; then
-            echo "✅ Success: CLTV Script verification passed!"
+          PUBKEY=$(submission/04.sh)
+          EXPECTED_OUTPUT=02c6c9306ade30f9711c9503cdaa94094efc025acb9be7845acc49e1cb475952c6
+          if [[ "$PUBKEY" == "$EXPECTED_OUTPUT" ]]; then
+            echo "✅ Success: Public Key Signer verification passed!"
           else
-            echo "❌ Error: CLTV Script verification failed!"
+            echo "❌ Error: Public Key Signer verification failed!"
             exit 1
           fi
       
-      - name: 05.sh - Verify CSV Script
+      - name: 05.sh - Verify TX Fee
         run: |
           chmod +x submission/05.sh
-          SCRIPT=$(submission/05.sh)
-          EXPECTED_OUTPUT=029600b27576a9141e51fcdc14be9a148bb0aaec9197eb47c83776fb88ac
-          if [[ "$SCRIPT" == "$EXPECTED_OUTPUT" ]]; then
-            echo "✅ Success: CSV Script verification passed!"
+          FEE=$(submission/05.sh)
+          if [[ "$FEE" == "696" ]]; then
+            echo "✅ Success: TX Fee verification passed!"
           else
-            echo "❌ Error: CSV Script verification failed!"
+            echo "❌ Error: TX Fee verification failed!"
+            exit 1
+          fi
+
+      - name: 06.sh - Verify TX Fee
+        run: |
+          chmod +x submission/06.sh
+          FEE=$(submission/06.sh)
+          if [[ "$FEE" == "696" ]]; then
+            echo "✅ Success: TX Fee verification passed!"
+          else
+            echo "❌ Error: TX Fee verification failed!"
+            exit 1
+          fi
+
+      - name: 07.sh - Verify Coinbase TX
+        run: |
+          chmod +x submission/07.sh
+          COINBASE=$(submission/07.sh)
+          EXPECTED_OUTPUT=7ab200e41b53d974f757535c01a715aae6b1322a30753c1d2b0ea201500bc060
+          if [[ "$COINBASE" == "$EXPECTED_OUTPUT" ]]; then
+            echo "✅ Success: Coinbase TX verification passed!"
+          else
+            echo "❌ Error: Coinbase TX verification failed!"
+            exit 1
+          fi
+
+      - name: 08.sh - Verify TX Block Height
+        run: |
+          chmod +x submission/08.sh
+          HEIGHT=$(submission/08.sh)
+          if [[ "$HEIGHT" == "243859" ]]; then
+            echo "✅ Success: TX Block Height verification passed!"
+          else
+            echo "❌ Error: TX Block Height verification failed!"
             exit 1
           fi

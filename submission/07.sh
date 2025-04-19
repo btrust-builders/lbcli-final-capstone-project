@@ -1,1 +1,1 @@
-# Only one tx in block 243,821 signals opt-in RBF. What is its txid?
+# what is the coinbase tx in this block 243,834
