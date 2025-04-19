@@ -15,13 +15,11 @@ jobs:
           
       - name: Setup Bitcoin Core
         run: |
-          wget https://bitcoincore.org/bin/bitcoin-core-28.0/bitcoin-28.0-x86_64-linux-gnu.tar.gz
-          tar -xzvf bitcoin-28.0-x86_64-linux-gnu.tar.gz
-          sudo bash .github/setup.sh
+          sudo bash .github/setup-core.sh
 
       - name: Get latest block in signet mode
         run: |
-            bitcoin-cli getblockchaininfo
+            bitcoin-cli -signet getblockhash 243833
 
       - name: 01.sh - Verify Hash Block
         run: |
