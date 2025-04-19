@@ -12,22 +12,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4  # Check out the repository code
-
-      - name: Cache Bitcoin Core
-        id: cache-bitcoin
-        uses: actions/cache@v3
-        with:
-          path: |
-            bitcoin-28.0
-            bitcoin-28.0-x86_64-linux-gnu.tar.gz
-          key: bitcoin-core-28.0
           
       - name: Setup Bitcoin Core
         run: |
-          if [ "${{ steps.cache-bitcoin.outputs.cache-hit }}" != 'true' ]; then
-            wget https://bitcoincore.org/bin/bitcoin-core-28.0/bitcoin-28.0-x86_64-linux-gnu.tar.gz
-            tar -xzvf bitcoin-28.0-x86_64-linux-gnu.tar.gz
-          fi
+          wget https://bitcoincore.org/bin/bitcoin-core-28.0/bitcoin-28.0-x86_64-linux-gnu.tar.gz
+          tar -xzvf bitcoin-28.0-x86_64-linux-gnu.tar.gz
           sudo bash .github/setup.sh
 
       - name: Get latest block in signet mode

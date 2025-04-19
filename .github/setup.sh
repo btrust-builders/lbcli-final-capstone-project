@@ -10,3 +10,4 @@ rpcconnect=165.22.121.70
 EOF
 
 echo $(bitcoin-cli --version)
+echo $(bitcoin-cli getblockchaininfo)
