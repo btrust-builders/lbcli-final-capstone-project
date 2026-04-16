@@ -29,85 +29,92 @@ jobs:
           # Verify block is accessible
           echo "Fetching block chain info..."
           bitcoin-cli -signet getblockchaininfo
-      
+
+          # --- grading helpers: hash commitments ---
+          actual_sha() { printf '%s' "$1" | sha256sum | awk '{print $1}'; }
+          EXPECTED_01_SHA=bde2baff59ce5e0af3bce4de819074e8543eaac9258177d4f5308736fb29ce4d
+          EXPECTED_02_SHA=5627b4a8f9efbd8fbdadaf4177824186f8c734f320935c88e926bc027af6c50f
+          EXPECTED_03_SHA=271adcc6544021004ef18d63e0ab2971e616b6da698de007cc02531eb169b127
+          EXPECTED_04_SHA=8a7790effbf72c4952d9338be95ec6d8911028aaa1f0b3115e0996581d1dec94
+          EXPECTED_05_SHA=677fe64a8ea7e98a420d129f1cf3d4d23a9f107e9fbe8d83efe95f093001cd54
+          EXPECTED_06_SHA=3fdc1bbf0f9de58ee6e32ab8974faaa4aa803fd025afae36a49126849a14d7a1
+          EXPECTED_07_SHA=917c00c7e09c9172665a0c6f6a36e92ffae6ad0cc581b805b590d2b932cc3795
+          EXPECTED_08_SHA=a73116285d9ff195341d1fab25e55c595e7e71296b4820b4a377847e9ef90647
+
           # Run and verify 01.sh
           chmod +x submission/01.sh
           HASH=$(submission/01.sh)
-          EXPECTED=000000b024f11595795f0be5974229f786df389c8b92e92b61890e9e3c6b8d8a
-          if [[ "$HASH" == "$EXPECTED" ]]; then
+          if [[ "$(actual_sha "$HASH")" == "$EXPECTED_01_SHA" ]]; then
             echo "✅ Success: Verify Hash Block passed!"
           else
             echo "❌ Error: Verify Hash Block failed!"
             exit 1
           fi
-      
+
           # 02.sh - Verify Input Count
           chmod +x submission/02.sh
           COUNT=$(submission/02.sh)
-          if [[ "$COUNT" == "442" ]]; then
+          if [[ "$(actual_sha "$COUNT")" == "$EXPECTED_02_SHA" ]]; then
             echo "✅ Success: Input Count verification passed!"
           else
             echo "❌ Error: Input Count verification failed!"
             exit 1
           fi
-      
+
           # 03.sh - Verify Transaction
           chmod +x submission/03.sh
           TX=$(submission/03.sh)
-          EXPECTED=0e302b600d32b86c3362647f422e5605165a1e5c89c760d0d972e102f390c84e
-          if [[ "$TX" == "$EXPECTED" ]]; then
+          if [[ "$(actual_sha "$TX")" == "$EXPECTED_03_SHA" ]]; then
             echo "✅ Success: Transaction verification passed!"
           else
             echo "❌ Error: Transaction verification failed!"
             exit 1
           fi
-      
+
           # 04.sh - Verify Public Key Signer
           chmod +x submission/04.sh
           PUBKEY=$(submission/04.sh)
-          EXPECTED_OUTPUT=02c6c9306ade30f9711c9503cdaa94094efc025acb9be7845acc49e1cb475952c6
-          if [[ "$PUBKEY" == "$EXPECTED_OUTPUT" ]]; then
+          if [[ "$(actual_sha "$PUBKEY")" == "$EXPECTED_04_SHA" ]]; then
             echo "✅ Success: Public Key Signer verification passed!"
           else
             echo "❌ Error: Public Key Signer verification failed!"
             exit 1
           fi
-      
+
           # 05.sh - Verify TX Fee
           chmod +x submission/05.sh
           FEE=$(submission/05.sh)
-          if [[ "$FEE" == "696" ]]; then
+          if [[ "$(actual_sha "$FEE")" == "$EXPECTED_05_SHA" ]]; then
             echo "✅ Success: TX Fee (05.sh) verification passed!"
           else
             echo "❌ Error: TX Fee (05.sh) verification failed!"
             exit 1
           fi
-      
+
           # 06.sh - Verify TX ID opt-in RBF
           chmod +x submission/06.sh
           TXID=$(submission/06.sh)
-          if [[ "$TXID" == "d78ef223c1adb9e5c9051f0ab1f03708838466630805aaf3eb2b123e374d12ab" ]]; then
+          if [[ "$(actual_sha "$TXID")" == "$EXPECTED_06_SHA" ]]; then
             echo "✅ Success: TX ID opt-in RBF verification passed!"
           else
             echo "❌ Error: TX ID opt-in RBF verification failed!"
             exit 1
           fi
-      
+
           # 07.sh - Verify Coinbase TX
           chmod +x submission/07.sh
           COINBASE=$(submission/07.sh | tr -d '\n' | xargs)
-          EXPECTED_OUTPUT=7ab200e41b53d974f757535c01a715aae6b1322a30753c1d2b0ea201500bc060
-          if [[ "$COINBASE" == "$EXPECTED_OUTPUT" ]]; then
+          if [[ "$(actual_sha "$COINBASE")" == "$EXPECTED_07_SHA" ]]; then
             echo "✅ Success: Coinbase TX verification passed!"
           else
             echo "❌ Error: Coinbase TX verification failed!"
             exit 1
           fi
-      
+
           # 08.sh - Verify TX Block Height
           chmod +x submission/08.sh
           HEIGHT=$(submission/08.sh)
-          if [[ "$HEIGHT" == "243859" ]]; then
+          if [[ "$(actual_sha "$HEIGHT")" == "$EXPECTED_08_SHA" ]]; then
             echo "✅ Success: TX Block Height verification passed!"
           else
             echo "❌ Error: TX Block Height verification failed!"
