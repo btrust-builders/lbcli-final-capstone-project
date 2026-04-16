@@ -7,7 +7,7 @@ After successful creation, add your wallet name to the `wallet.txt` file
 Hence, you should add your wallet name to subsequent commands, for example 
 `bitcoin-cli -signet -rpcwallet=github-username getblockcount`
 
-You dont need to add your bitcoin-cli commands in this file.
+You dont need to add any bitcoin-cli commands in this exercise.
 The goal is to update the `xxx.txt` files with the address, transaction and block hashes.
 
 ### Complete the tasks below
@@ -22,7 +22,7 @@ The goal is to update the `xxx.txt` files with the address, transaction and bloc
 
 3. Fund the address using this faucet (`alt.signetfaucet.com`) and save to files:
    - `transaction-1.txt` (txid)
-   - `block-1.txt` (blockhash for the transaction)
+   - `block-1.txt` (blockhash where the transaction was mined)
    - `coinbase-1.txt` (coinbase transaction in the block)
 
 4. Spend from funded address by creating a transaction with details below:
