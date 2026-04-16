@@ -85,9 +85,9 @@ jobs:
           chmod +x submission/05.sh
           FEE=$(submission/05.sh)
           if [[ "$(actual_sha "$FEE")" == "$EXPECTED_05_SHA" ]]; then
-            echo "✅ Success: TX Fee (05.sh) verification passed!"
+            echo "✅ Success: TX Fee verification passed!"
           else
-            echo "❌ Error: TX Fee (05.sh) verification failed!"
+            echo "❌ Error: TX Fee verification failed!"
             exit 1
           fi
 
@@ -138,6 +138,35 @@ jobs:
             echo "✅ GitHub profile exists: https://github.com/$WALLET"
           else
             echo "❌ GitHub profile not found for wallet name '$WALLET'"
+            exit 1
+          fi
+
+          # Verify descriptor.txt is valid
+          if [[ ! -s submission/descriptor.txt ]]; then
+              echo "❌ Error: descriptor.txt is empty or missing."
+              exit 1
+          fi
+          DESC=$(cat submission/descriptor.txt | tr -d '\n')
+          DESC_INFO=$(bitcoin-cli -signet getdescriptorinfo "$DESC" 2>/dev/null) || true
+          if [[ -z "$DESC_INFO" ]]; then
+            echo "❌ descriptor.txt could not be validated."
+            exit 1
+          fi
+          DESC_VALID=$(echo "$DESC_INFO" | jq -r '.issolvable')
+          if [[ "$DESC_VALID" == "true" ]]; then
+            echo "✅ Descriptor is valid."
+          else
+            echo "❌ Descriptor is not valid."
+            exit 1
+          fi
+
+          # Verify descriptor can derive at least one tb1 address
+          DESC_CHECKSUM=$(echo "$DESC_INFO" | jq -r '.descriptor')
+          DESC_ADDR=$(bitcoin-cli -signet deriveaddresses "$DESC_CHECKSUM" "[0,0]" | jq -r '.[0]')
+          if [[ "$DESC_ADDR" == "tb1"* ]]; then
+            echo "✅ Descriptor derives a valid signet address: $DESC_ADDR"
+          else
+            echo "❌ Descriptor does not derive a valid signet address."
             exit 1
           fi
 
@@ -326,5 +355,138 @@ jobs:
             echo "✅ multisig-coinbase matches the first transaction."
           else
             echo "❌ multisig-coinbase does not match."
+            exit 1
+          fi
+
+
+          ## TASK 6 — PSBT
+
+          # Verify psbt.txt exists and is valid PSBT
+          if [[ ! -s submission/psbt.txt ]]; then
+              echo "❌ Error: psbt.txt is empty or missing."
+              exit 1
+          fi
+          PSBT_BASE64=$(cat submission/psbt.txt | tr -d '\n')
+          PSBT_DECODED=$(bitcoin-cli -signet decodepsbt "$PSBT_BASE64" 2>/dev/null) || true
+          if [[ -n "$PSBT_DECODED" ]]; then
+            echo "✅ psbt.txt contains a valid PSBT."
+          else
+            echo "❌ psbt.txt does not contain a valid PSBT."
+            exit 1
+          fi
+
+          # Verify PSBT has output paying 5,000 sats to the target address
+          PSBT_TARGET=$(echo "$PSBT_DECODED" | jq -r '.tx.vout[] | select(.scriptPubKey.address=="tb1qddpcyus3u603n63lk7m5epjllgexc24vj5ltp7") | .value')
+          if [[ "$PSBT_TARGET" == "0.00005000" ]]; then
+            echo "✅ PSBT pays exactly 5,000 sats to target address."
+          else
+            echo "❌ PSBT does not pay 5,000 sats to target address."
+            exit 1
+          fi
+
+          # Verify psbt-tx.txt exists and tx is confirmed on signet
+          if [[ ! -s submission/psbt-tx.txt ]]; then
+              echo "❌ Error: psbt-tx.txt is empty or missing."
+              exit 1
+          fi
+          PSBT_TXID=$(cat submission/psbt-tx.txt | tr -d '\n')
+          PSBT_TX_DETAILS=$(bitcoin-cli -signet getrawtransaction "$PSBT_TXID" true 2>/dev/null) || true
+          if [[ -n "$PSBT_TX_DETAILS" ]]; then
+            echo "✅ PSBT transaction exists on signet: $PSBT_TXID"
+          else
+            echo "❌ PSBT transaction not found on signet: $PSBT_TXID"
+            exit 1
+          fi
+
+          # Verify the broadcast tx pays 5,000 sats to target
+          PSBT_TX_AMOUNT=$(echo "$PSBT_TX_DETAILS" | jq -r '.vout[] | select(.scriptPubKey.address=="tb1qddpcyus3u603n63lk7m5epjllgexc24vj5ltp7") | .value')
+          if [[ "$PSBT_TX_AMOUNT" == "0.00005000" ]]; then
+            echo "✅ Broadcast PSBT transaction pays exactly 5,000 sats to target."
+          else
+            echo "❌ Broadcast PSBT transaction does not pay 5,000 sats to target."
+            exit 1
+          fi
+
+
+          ## TASK 7 — P2WSH MULTISIG
+
+          # Verify p2wsh-address.txt
+          if [[ ! -s submission/p2wsh-address.txt ]]; then
+              echo "❌ Error: p2wsh-address.txt is empty or missing."
+              exit 1
+          fi
+          P2WSH_ADDR=$(cat submission/p2wsh-address.txt | tr -d '\n')
+          if [[ "$P2WSH_ADDR" == "tb1q"* ]]; then
+            echo "✅ P2WSH address is native SegWit: $P2WSH_ADDR"
+          else
+            echo "❌ P2WSH address does not start with tb1q: $P2WSH_ADDR"
+            exit 1
+          fi
+
+          # Verify p2wsh-witness-script.txt is valid hex
+          if [[ ! -s submission/p2wsh-witness-script.txt ]]; then
+              echo "❌ Error: p2wsh-witness-script.txt is empty or missing."
+              exit 1
+          fi
+          P2WSH_SCRIPT=$(cat submission/p2wsh-witness-script.txt | tr -d '\n')
+          if [[ "$P2WSH_SCRIPT" =~ ^[0-9a-fA-F]+$ ]]; then
+            echo "✅ P2WSH witness script is valid hex."
+          else
+            echo "❌ P2WSH witness script is not valid hex."
+            exit 1
+          fi
+
+          # Verify p2wsh-funding-tx.txt exists on signet and pays to the P2WSH address
+          if [[ ! -s submission/p2wsh-funding-tx.txt ]]; then
+              echo "❌ Error: p2wsh-funding-tx.txt is empty or missing."
+              exit 1
+          fi
+          P2WSH_TXID=$(cat submission/p2wsh-funding-tx.txt | tr -d '\n')
+          P2WSH_TX=$(bitcoin-cli -signet getrawtransaction "$P2WSH_TXID" true 2>/dev/null) || true
+          if [[ -z "$P2WSH_TX" ]]; then
+            echo "❌ P2WSH funding transaction not found on signet: $P2WSH_TXID"
+            exit 1
+          fi
+          P2WSH_MATCH=$(echo "$P2WSH_TX" | jq --arg addr "$P2WSH_ADDR" '.vout[] | select(.scriptPubKey.address == $addr)')
+          if [[ -n "$P2WSH_MATCH" ]]; then
+            echo "✅ P2WSH funding transaction pays to the P2WSH address."
+          else
+            echo "❌ P2WSH funding transaction does not pay to the P2WSH address."
+            exit 1
+          fi
+
+
+          ## TASK 8 — OP_RETURN
+
+          # Verify opreturn-tx.txt exists on signet
+          if [[ ! -s submission/opreturn-tx.txt ]]; then
+              echo "❌ Error: opreturn-tx.txt is empty or missing."
+              exit 1
+          fi
+          OPRETURN_TXID=$(cat submission/opreturn-tx.txt | tr -d '\n')
+          OPRETURN_TX=$(bitcoin-cli -signet getrawtransaction "$OPRETURN_TXID" true 2>/dev/null) || true
+          if [[ -z "$OPRETURN_TX" ]]; then
+            echo "❌ OP_RETURN transaction not found on signet: $OPRETURN_TXID"
+            exit 1
+          fi
+          echo "✅ OP_RETURN transaction exists on signet: $OPRETURN_TXID"
+
+          # Verify tx has a nulldata output
+          OPRETURN_HEX=$(echo "$OPRETURN_TX" | jq -r '.vout[] | select(.scriptPubKey.type=="nulldata") | .scriptPubKey.hex')
+          if [[ -z "$OPRETURN_HEX" ]]; then
+            echo "❌ Transaction does not contain an OP_RETURN output."
+            exit 1
+          fi
+          echo "✅ Transaction contains an OP_RETURN output."
+
+          # Verify the OP_RETURN data matches the student's GitHub username
+          OPRETURN_DATA=$(echo "$OPRETURN_HEX" | sed 's/^6a//' | sed 's/^..//')
+          OPRETURN_DECODED=$(echo "$OPRETURN_DATA" | xxd -r -p)
+          EXPECTED_OPRETURN_SHA=$(printf '%s' "$WALLET" | sha256sum | awk '{print $1}')
+          ACTUAL_OPRETURN_SHA=$(printf '%s' "$OPRETURN_DECODED" | sha256sum | awk '{print $1}')
+          if [[ "$ACTUAL_OPRETURN_SHA" == "$EXPECTED_OPRETURN_SHA" ]]; then
+            echo "✅ OP_RETURN data matches GitHub username."
+          else
+            echo "❌ OP_RETURN data does not match GitHub username."
             exit 1
           fi
