@@ -13,10 +13,12 @@ signet=1
 [signet]
 rpcuser=btrustbuildersrpc
 rpcpassword=btrustbuilderspass
-rpcconnect=161.35.161.124
+rpcconnect=167.172.185.136
 ```
 
 ...and then execute `bitcoin-cli -signet getblockchaininfo`.
+
+OR Use this one command `bitcoin-cli -rpcuser=btrustbuildersrpc -rpcpassword=btrustbuilderspass -rpcconnect=167.172.185.136 -rpcport=38332 getblockchaininfo`
 
 Using the command above with return an object containing various state info regarding the blockchain on Signet which you can confirm on `https://mempool.space/signet`.
 
@@ -31,7 +33,7 @@ You can also check out [Bitcoin Core RPC API Reference docs](https://developer.b
 1. Fork this repository.
 2. Go to the `Actions` tab and enable github workflow for your repository by clicking `I understand my ...`
 
-<img src="https://github.com/btrust-builders/lbcli-final-capstone-project/blob/main/enable-github-actions.png" width="500" />
+<img src="https://github.com/btrust-builders/lbcli-final-capstone-project/blob/main/enable-github-actions.png" width="600" />
 
 3. Clone your fork to your local computer.
 4. Add your bitcoin cli commands to the script files: `01.sh to 08.sh` in the `submission` folder. Example:
@@ -46,7 +48,7 @@ You can also check out [Bitcoin Core RPC API Reference docs](https://developer.b
 
 7. For the final exercise, follow instructions in `FINAL-TASK.MD` file and update all other `xxx.txt` files.
 
-8. Submit your solution to this form: [Google form](https://forms.gle/MHXcSUFStn5vr5dXA).
+8. Submit your solution to this form: [Google form](https://forms.gle/AcGYXpLZQrRYnddk6).
 
 PS: You can commit and push as often as you like and GitHub Actions will re-evaluate your code every time.
 You will need to look through the auto-grader logs (in the "Actions" tab) to see what exactly you got right or wrong.
